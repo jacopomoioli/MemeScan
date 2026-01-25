@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="MemeScan.vcxproj" />
+  <Project Path="MemeScan.vcxproj" Id="3424e7d1-0986-4607-912e-529967881ba7" />
 </Solution>

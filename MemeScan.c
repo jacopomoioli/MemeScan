@@ -48,6 +48,8 @@ void ScanProcessMemory(HANDLE processHandle, DWORD pid, LPSTR processName) {
 		// Skip useless stuff
 		if (
 			mbi.State != MEM_COMMIT ||
+			mbi.Type != MEM_PRIVATE ||
+			(mbi.Protect & 0xFF) == (mbi.AllocationProtect) ||
 			(mbi.Protect & 0xFF) == PAGE_NOACCESS ||
 			(mbi.Protect & 0xFF) == PAGE_READONLY ||
 			(mbi.Protect & 0xFF) == PAGE_READWRITE ||
@@ -56,7 +58,14 @@ void ScanProcessMemory(HANDLE processHandle, DWORD pid, LPSTR processName) {
 			) goto skip_to_next_page;
 
 
-		printf("%s (PID %d): %s @ 0x%p\n", processName, pid, ProtectionToString(mbi.Protect), address);
+		printf(
+			"[!] %s (PID %d): \n\t%s @ 0x%p\n\tOriginal protection: %s\n", 
+			processName, 
+			pid, 
+			ProtectionToString(mbi.Protect), 
+			address, 
+			ProtectionToString(mbi.AllocationProtect)
+		);
 
 	skip_to_next_page:
 		address = (LPVOID)((BYTE*)mbi.BaseAddress + mbi.RegionSize);
