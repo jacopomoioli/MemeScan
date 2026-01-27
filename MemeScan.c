@@ -116,7 +116,11 @@ int main(int argc, char** argv) {
 		if (!processHandle) continue;
 
 		ScanProcessMemory(processHandle, processesInfo[i].ProcessId, processesInfo[i].pProcessName);
+
+        CloseHandle(processHandle);
 	}
+
+    WTSFreeMemory(&processesInfo);
 
 	return 0;
 
