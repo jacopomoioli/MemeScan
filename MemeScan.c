@@ -59,11 +59,12 @@ void ScanProcessMemory(HANDLE processHandle, DWORD pid, LPSTR processName) {
 
 
 		printf(
-			"[!] %s (PID %d): \n\t%s @ 0x%p\n\tOriginal protection: %s\n", 
+			"[!] %s (PID %d): \n\t%s @ 0x%p (%d bytes)\n\tOriginal protection: %s\n", 
 			processName, 
 			pid, 
 			ProtectionToString(mbi.Protect), 
 			address, 
+			mbi.RegionSize,
 			ProtectionToString(mbi.AllocationProtect)
 		);
 
@@ -91,7 +92,7 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		ScanProcessMemory(processHandle, NULL, NULL);
+		ScanProcessMemory(processHandle, pid, "");
 		return 0;
 	}
 
@@ -109,7 +110,7 @@ int main(int argc, char** argv) {
 
 	for (DWORD i = 0; i < processCount; i++) {
 		processHandle = OpenProcess(
-			PROCESS_QUERY_INFORMATION,
+			PROCESS_QUERY_LIMITED_INFORMATION,
 			FALSE,
 			processesInfo[i].ProcessId
 		);
