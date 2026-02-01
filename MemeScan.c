@@ -4,32 +4,54 @@
 
 #pragma comment(lib, "Wtsapi32.lib")
 
+#define PAGE_PROTECTION_FLAGS (PAGE_NOACCESS | PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY )
+
+char IsExecutable(DWORD protect){
+    switch(protect & PAGE_PROTECTION_FLAGS){
+        case PAGE_EXECUTE:
+        case PAGE_EXECUTE_READ:
+        case PAGE_EXECUTE_READWRITE:
+        case PAGE_EXECUTE_WRITECOPY:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+char IsWritable(DWORD protect){
+    switch(protect & PAGE_PROTECTION_FLAGS){
+        case PAGE_READWRITE:
+        case PAGE_WRITECOPY:
+        case PAGE_EXECUTE_READWRITE:
+        case PAGE_EXECUTE_WRITECOPY:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* Convert memory protection constants to string */
-const char* ProtectionToString(DWORD protect)
-{
-	switch (protect & 0xFF)
-	{
-	case PAGE_NOACCESS:          return "PAGE_NOACCESS";
-	case PAGE_READONLY:          return "PAGE_READONLY";
-	case PAGE_READWRITE:         return "PAGE_READWRITE";
-	case PAGE_WRITECOPY:         return "PAGE_WRITECOPY";
-	case PAGE_EXECUTE:           return "PAGE_EXECUTE";
-	case PAGE_EXECUTE_READ:      return "PAGE_EXECUTE_READ";
-	case PAGE_EXECUTE_READWRITE: return "PAGE_EXECUTE_READWRITE";
-	case PAGE_EXECUTE_WRITECOPY: return "PAGE_EXECUTE_WRITECOPY";
-	default:                     return "UNKNOWN";
+const char* ProtectionToString(DWORD protect){
+	switch (protect & 0xFF){
+        case PAGE_NOACCESS:          return "####";
+        case PAGE_READONLY:          return "R###";
+        case PAGE_READWRITE:         return "RW##";
+        case PAGE_WRITECOPY:         return "#W#C";
+        case PAGE_EXECUTE:           return "##X#";
+        case PAGE_EXECUTE_READ:      return "R#X#";
+        case PAGE_EXECUTE_READWRITE: return "RWX#";
+        case PAGE_EXECUTE_WRITECOPY: return "#WXC";
+        default:                     return "????";
 	}
 }
 
 /* Convert page state constants to string */
-const char* StateToString(DWORD state)
-{
-	switch (state)
-	{
-	case MEM_COMMIT:  return "MEM_COMMIT";
-	case MEM_RESERVE: return "MEM_RESERVE";
-	case MEM_FREE:    return "MEM_FREE";
-	default:          return "UNKNOWN";
+const char* StateToString(DWORD state){
+	switch (state){
+        case MEM_COMMIT:  return "MEM_COMMIT";
+        case MEM_RESERVE: return "MEM_RESERVE";
+        case MEM_FREE:    return "MEM_FREE";
+        default:          return "UNKNOWN";
 	}
 }
 
@@ -46,16 +68,7 @@ void ScanProcessMemory(HANDLE processHandle, DWORD pid, LPSTR processName) {
 		sizeof(mbi)
 	)) {
 		// Skip useless stuff
-		if (
-			mbi.State != MEM_COMMIT ||
-			mbi.Type != MEM_PRIVATE ||
-			(mbi.Protect & 0xFF) == (mbi.AllocationProtect) ||
-			(mbi.Protect & 0xFF) == PAGE_NOACCESS ||
-			(mbi.Protect & 0xFF) == PAGE_READONLY ||
-			(mbi.Protect & 0xFF) == PAGE_READWRITE ||
-			(mbi.Protect & 0xFF) == PAGE_WRITECOPY ||
-			(mbi.Protect & 0xFF) == PAGE_EXECUTE_READ
-			) goto skip_to_next_page;
+        if (!IsExecutable(mbi.Protect) && !IsWritable(mbi.Protect)) goto skip_to_next_page;
 
 
 		printf(
