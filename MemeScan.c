@@ -73,10 +73,44 @@ void ScanProcessMemory(HANDLE processHandle, DWORD pid, LPSTR processName) {
 	}
 }
 
+/* Get the SeDebugPrivilege in order to get an handle even to system processes */
+int getDebugPrivileges(){
+    handle currProcessToken;
+    LUID luid;
+    TOKEN_PRIVILEGES tokenPrivileges;
+
+    if (!OpenProcessToken(
+            GetCurrentProcess(), 
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 
+            &currProcessToken
+        )) return 0;
+
+    if(!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)){
+        CloseHandle(currProcessToken);
+        return 0;
+    }
+
+    tokenPrivileges.PrivilegeCount = 1;
+    tokenPrivileges[0].Luid = luid;
+    tokenPrivileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    if(!AdjustTokenPrivileges(currProcessToken, FALSE, &tokenPrivileges, sizeof(tokenPrivileges), NULL, NULL)){
+        CloseHandle(currProcessToken);
+        return 0;
+    }
+
+    CloseHandle(currProcessToken);
+    return 1;
+}
 
 int main(int argc, char** argv) {
 	DWORD pid = 0;
 	HANDLE processHandle;
+
+    if(!getDebugPrivileges()){
+        printf("Error while acquiring SeDebugPrivileges.\nThe lack of this privilege will result in the unability to analyze system processes. Check admin rights\n");
+    }
+
 
 	// if a PID is specified, scan only that process
 	if (argc == 2) {
